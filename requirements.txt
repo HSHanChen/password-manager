@@ -1,2 +1,5 @@
 cryptography
 tkinter
+cairosvg
+pillow
+ttkbootstrap

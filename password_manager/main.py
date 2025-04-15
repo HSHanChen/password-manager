@@ -5,49 +5,58 @@
 @Description: 程序入口
 """
 
-import tkinter as tk
-from tkinter import ttk, messagebox
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from tkinter import messagebox
 from core.storage import load_data, save_data
 import os
-from tkinter import PhotoImage, Canvas
+import io
+import cairosvg
+from PIL import Image, ImageTk
 
 
 class PasswordManagerApp:
+    def set_global_font():
+        style = tb.Style()
+        style.configure('.', font=('Microsoft YaHei', 12))  # 设置全局字体为微软雅黑，大小12
+
     def __init__(self, root):
         self.root = root
         self.root.title("密码管理器")
 
-        # 获取屏幕分辨率，设置主窗口为屏幕的 80%
+        # 获取屏幕的宽度和高度
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
+
+        # 设置窗口大小
         window_width = int(screen_width * 0.8)
         window_height = int(screen_height * 0.8)
-        self.root.geometry(f"{window_width}x{window_height}")
 
-        # 设置窗口可自适应
+        # 计算窗口左上角的坐标，使窗口居中
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
         self.root.rowconfigure(0, weight=1)
         self.root.columnconfigure(0, weight=1)
 
         self.master_password = ""
         self.passwords = []
 
-        # 主 Frame
-        self.main_frame = tk.Frame(root)
+        self.main_frame = tb.Frame(root)
         self.main_frame.grid(row=0, column=0, sticky="nsew")
         self.main_frame.rowconfigure(2, weight=1)
         self.main_frame.columnconfigure(0, weight=1)
 
-        # 顶部密码框
-        self.password_var = tk.StringVar()
-        tk.Label(self.main_frame, text="主密码:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
-        tk.Entry(self.main_frame, textvariable=self.password_var, show="*", width=30).grid(row=0, column=1, padx=5, pady=5)
-        tk.Button(self.main_frame, text="加载密码", command=self.load_passwords).grid(row=0, column=2, padx=5)
+        self.password_var = tb.StringVar()
+        tb.Label(self.main_frame, text="主密码:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
+        tb.Entry(self.main_frame, textvariable=self.password_var, show="*", width=30).grid(row=0, column=1, padx=5, pady=5)
+        tb.Button(self.main_frame, text="加载密码", command=self.load_passwords, bootstyle=PRIMARY).grid(row=0, column=2, padx=5)
 
-        # 表格
         self.columns = ("name", "url", "username", "password", "remark")
-        self.tree = ttk.Treeview(self.main_frame, columns=self.columns, show="headings")
+        self.tree = tb.Treeview(self.main_frame, columns=self.columns, show="headings", bootstyle=INFO)
 
-        # 英文字段名 => 中文标题
         column_titles = {
             "name": "名称",
             "url": "地址",
@@ -62,12 +71,11 @@ class PasswordManagerApp:
 
         self.tree.grid(row=2, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
 
-        # 按钮区域
-        button_frame = tk.Frame(self.main_frame)
+        button_frame = tb.Frame(self.main_frame)
         button_frame.grid(row=3, column=0, columnspan=3, pady=10)
-        tk.Button(button_frame, text="添加", command=self.add_password).pack(side="left", padx=5)
-        tk.Button(button_frame, text="修改", command=self.edit_password).pack(side="left", padx=5)
-        tk.Button(button_frame, text="删除", command=self.delete_password).pack(side="left", padx=5)
+        tb.Button(button_frame, text="添加", command=self.add_password, bootstyle=SUCCESS).pack(side="left", padx=5)
+        tb.Button(button_frame, text="修改", command=self.edit_password, bootstyle=WARNING).pack(side="left", padx=5)
+        tb.Button(button_frame, text="删除", command=self.delete_password, bootstyle=DANGER).pack(side="left", padx=5)
 
     def load_passwords(self):
         try:
@@ -84,7 +92,7 @@ class PasswordManagerApp:
                 item["name"],
                 item["url"],
                 item["username"],
-                "******",  # 显示密码时加密显示
+                "******",
                 item["remark"]
             ))
 
@@ -110,31 +118,25 @@ class PasswordManagerApp:
         self.refresh_table()
 
     def open_editor(self, title, index=None):
-        import os
-        from tkinter import PhotoImage
-
-        edit_window = tk.Toplevel(self.root)
+        edit_window = tb.Toplevel(self.root)
         edit_window.title(title)
-
-        # 设置弹窗大小为主窗口的 60%
         window_width = int(self.root.winfo_width() * 0.6)
         window_height = int(self.root.winfo_height() * 0.6)
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width // 2) - (window_width // 2)
-        y = (screen_height // 2) - (window_height // 2)
+        x = (self.root.winfo_screenwidth() - window_width) // 2
+        y = (self.root.winfo_screenheight() - window_height) // 2
         edit_window.geometry(f"{window_width}x{window_height}+{x}+{y}")
         edit_window.resizable(False, False)
-        edit_window.config(bg="#f5f5f5")
 
-        pad_x = 20
+        for i in range(4):
+            edit_window.columnconfigure(i, weight=1)
+
         pad_y = 15
 
-        name_var = tk.StringVar()
-        url_var = tk.StringVar()
-        user_var = tk.StringVar()
-        pwd_var = tk.StringVar()
-        remark_var = tk.StringVar()
+        name_var = tb.StringVar()
+        url_var = tb.StringVar()
+        user_var = tb.StringVar()
+        pwd_var = tb.StringVar()
+        remark_var = tb.StringVar()
 
         if index is not None:
             item = self.passwords[index]
@@ -144,57 +146,62 @@ class PasswordManagerApp:
             pwd_var.set(item["password"])
             remark_var.set(item["remark"])
 
-        row = 0
+        def add_centered_entry(row, label, var, is_password=False):
 
-        # 通用 Label + Entry 函数
-        def add_entry(label, variable, r):
-            tk.Label(edit_window, text=label, bg="#f5f5f5", font=("Segoe UI", 12)).grid(row=r, column=0, padx=pad_x, pady=pad_y, sticky="e")
-            entry = tk.Entry(edit_window, textvariable=variable, width=50, font=("Segoe UI", 13), bd=2, relief="groove")
-            entry.grid(row=r, column=1, padx=pad_x, pady=pad_y, sticky="w")
-            return entry
+            # 分离文字和星号
+            label_text = f"{label}"  # 字段名称部分
+            star_text = " *"  # 必填星号部分
 
-        add_entry("名称", name_var, row);
-        row += 1
-        add_entry("地址", url_var, row);
-        row += 1
-        add_entry("账号", user_var, row);
-        row += 1
+            # 创建一个Frame容器，用来包裹两个标签
+            label_frame = tb.Frame(edit_window)
 
-        # 密码字段 + 眼睛图标
-        tk.Label(edit_window, text="密码", bg="#f5f5f5", font=("Segoe UI", 12)).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky="e")
-        password_frame = tk.Frame(edit_window, bg="#f5f5f5")
-        password_frame.grid(row=row, column=1, sticky="w", padx=pad_x, pady=pad_y)
+            # 创建显示字段名称的标签
+            label_widget = tb.Label(label_frame, text=label_text)
+            label_widget.pack(side="left")  # 文字部分
 
-        password_entry = tk.Entry(password_frame, textvariable=pwd_var, show="*", width=44, font=("Segoe UI", 13), bd=2, relief="groove")
-        password_entry.pack(side="left")
+            # 创建显示红色星号的标签
+            star_widget = tb.Label(label_frame, text=star_text, foreground="red")  # 红色星号
+            star_widget.pack(side="left")  # 星号部分
 
-        try:
-            eye_icon = PhotoImage(file=os.path.join("assets", "eye_icon.png")).subsample(15, 15)
-        except Exception as e:
-            print("图标加载失败:", e)
-            eye_icon = None
+            # 放置Frame
+            label_frame.grid(row=row, column=1, sticky="e", pady=pad_y)
 
-        def toggle_password():
-            if password_entry.cget("show") == "*":
-                password_entry.config(show="")
+            # tb.Label(edit_window, text=label).grid(row=row, column=1, sticky="e", pady=pad_y)
+            if is_password:
+                frame = tb.Frame(edit_window)
+                entry = tb.Entry(frame, textvariable=var, width=70, show="*")
+                entry.pack(side="left", padx=(0, 5))
+
+                with open("assets/eye.svg", "rb") as f:
+                    svg_data = f.read()
+                png_data = cairosvg.svg2png(bytestring=svg_data, output_width=15, output_height=15)
+                eye_img = Image.open(io.BytesIO(png_data))
+                eye_icon = ImageTk.PhotoImage(eye_img)
+
+                def toggle_password():
+                    entry.config(show="" if entry.cget("show") == "*" else "*")
+
+                label = tb.Label(frame, image=eye_icon, cursor="hand2")
+                label.image = eye_icon
+                label.pack(side="left")
+                label.bind("<Button-1>", lambda e: toggle_password())
+                frame.grid(row=row, column=2, sticky="w")
+                return entry
             else:
-                password_entry.config(show="*")
+                entry = tb.Entry(edit_window, textvariable=var, width=70)
+                entry.grid(row=row, column=2, sticky="w", pady=pad_y)
+                return entry
 
-        if eye_icon:
-            eye_label = tk.Label(password_frame, image=eye_icon, bg="#f5f5f5", cursor="hand2")
-            eye_label.image = eye_icon  # 避免被垃圾回收
-            eye_label.pack(side="left", padx=(5, 0))
-            eye_label.bind("<Button-1>", lambda e: toggle_password())
+        add_centered_entry(0, "名称", name_var)
+        add_centered_entry(1, "地址", url_var)
+        add_centered_entry(2, "账号", user_var)
+        add_centered_entry(3, "密码", pwd_var, is_password=True)
 
-        row += 1
-
-        # 备注（Text）
-        tk.Label(edit_window, text="备注", bg="#f5f5f5", font=("Segoe UI", 12)).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky="ne")
-        remark_text = tk.Text(edit_window, wrap="word", height=4, width=50, font=("Segoe UI", 12), bd=2, relief="groove")
-        remark_text.grid(row=row, column=1, padx=pad_x, pady=pad_y, sticky="w")
+        tb.Label(edit_window, text="备注").grid(row=4, column=1, sticky="ne", pady=pad_y)
+        remark_text = tb.Text(edit_window, wrap="word", height=5, width=70)
+        remark_text.grid(row=4, column=2, sticky="w", pady=pad_y)
         if remark_var.get():
             remark_text.insert("1.0", remark_var.get())
-        row += 1
 
         def save():
             new_data = {
@@ -206,6 +213,7 @@ class PasswordManagerApp:
             }
             if not all(new_data.values()):
                 messagebox.showwarning("提示", "所有字段都不能为空")
+                edit_window.focus_set()
                 return
 
             if index is None:
@@ -217,17 +225,15 @@ class PasswordManagerApp:
             self.refresh_table()
             edit_window.destroy()
 
-        # 保存按钮
-        save_button = tk.Button(edit_window, text="保存", command=save, font=("Segoe UI", 12), bg="#4CAF50", fg="white", width=20)
-        save_button.grid(row=row, column=1, pady=pad_y)
 
-# 入口
+        tb.Button(edit_window, text="保存", command=save, bootstyle=SUCCESS).grid(row=5, column=1, columnspan=2, pady=pad_y, sticky="")
+
+
 if __name__ == "__main__":
     if not os.path.exists("data"):
         os.makedirs("data")
-    root = tk.Tk()
+    root = tb.Window(themename="flatly")
     app = PasswordManagerApp(root)
     root.mainloop()
-
 
 
