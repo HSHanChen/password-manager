@@ -1,5 +1,2 @@
-cryptography
-tkinter
-cairosvg
-pillow
-ttkbootstrap
+PyQt5==5.15.9
+pycryptodome==3.19.0
