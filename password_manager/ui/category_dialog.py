@@ -124,7 +124,6 @@ class CategoryDialog(QDialog):
         item = selected[0]
         cat_id = item.data(0, Qt.UserRole)
 
-        from PyQt5.QtWidgets import QMessageBox
         reply = QMessageBox.question(
             self, "确认删除",
             "确定要删除此分类吗？所有子分类和关联的密码也将被删除！",
@@ -132,15 +131,24 @@ class CategoryDialog(QDialog):
         )
 
         if reply == QMessageBox.Yes:
-            from database import Database
-            db = Database()
+            try:
+                from database import Database
+                db = Database()
 
-            # 删除分类及其关联的密码
-            db.conn.execute("DELETE FROM password_entries WHERE category_id = ?", (cat_id,))
-            db.conn.execute("DELETE FROM categories WHERE id = ?", (cat_id,))
-            db.conn.commit()
-            db.close()
+                # 先删除子分类
+                db.conn.execute("DELETE FROM categories WHERE parent_id = ?", (cat_id,))
 
-            # 刷新列表
-            self.categories = db.get_categories()
-            self._load_categories()
+                # 删除关联密码
+                db.conn.execute("DELETE FROM password_entries WHERE category_id = ?", (cat_id,))
+
+                # 最后删除主分类
+                db.conn.execute("DELETE FROM categories WHERE id = ?", (cat_id,))
+
+                db.conn.commit()
+                db.close()
+
+                # 刷新列表
+                self.categories = db.get_categories()
+                self._load_categories()
+            except Exception as e:
+                QMessageBox.critical(self, "错误", f"删除失败: {str(e)}")

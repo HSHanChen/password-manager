@@ -12,6 +12,7 @@ from PyQt5.QtCore import Qt, QModelIndex, pyqtSignal, QSize
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap
 from models.password_model import PasswordTableModel
 from models.category_model import CategoryTreeModel
+from ui.styles import get_style_sheet
 
 
 class MainWindow(QMainWindow):
@@ -27,6 +28,8 @@ class MainWindow(QMainWindow):
         self._setup_ui()
         self._load_data()
         self._connect_signals()
+
+        self.setStyleSheet(get_style_sheet())
 
     def _setup_ui(self):
         # 主窗口布局
@@ -48,19 +51,19 @@ class MainWindow(QMainWindow):
         self.add_button = QPushButton("新增")
         self.edit_button = QPushButton("编辑")
         self.delete_button = QPushButton("删除")
-        self.export_button = QPushButton("导出数据")
-        self.import_button = QPushButton("导入数据")
-        self.change_password_button = QPushButton("修改主密码")
-        self.manage_categories_button = QPushButton("管理分类")
+        # self.export_button = QPushButton("导出数据")
+        # self.import_button = QPushButton("导入数据")
+        # self.change_password_button = QPushButton("修改主密码")
+        # self.manage_categories_button = QPushButton("管理分类")
 
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.edit_button)
         button_layout.addWidget(self.delete_button)
         button_layout.addStretch()
-        button_layout.addWidget(self.export_button)
-        button_layout.addWidget(self.import_button)
-        button_layout.addWidget(self.manage_categories_button)
-        button_layout.addWidget(self.change_password_button)
+        # button_layout.addWidget(self.export_button)
+        # button_layout.addWidget(self.import_button)
+        # button_layout.addWidget(self.manage_categories_button)
+        # button_layout.addWidget(self.change_password_button)
 
         # 主内容区域 (分类树 + 密码列表)
         splitter = QSplitter()
@@ -87,6 +90,33 @@ class MainWindow(QMainWindow):
 
         # 状态栏
         self.statusBar().showMessage("就绪")
+
+        # 添加菜单栏
+        menubar = self.menuBar()
+        # 文件菜单
+        file_menu = menubar.addMenu("文件")
+
+        export_action = QAction("导出数据", self)
+        export_action.triggered.connect(self._on_export)
+        file_menu.addAction(export_action)
+
+        import_action = QAction("导入数据", self)
+        import_action.triggered.connect(self._on_import)
+        file_menu.addAction(import_action)
+
+        # 设置菜单
+        settings_menu = menubar.addMenu("设置")
+
+        categories_action = QAction("管理分类", self)
+        categories_action.triggered.connect(self._on_manage_categories)
+        settings_menu.addAction(categories_action)
+
+        password_action = QAction("修改主密码", self)
+        password_action.triggered.connect(self._on_change_password)
+        settings_menu.addAction(password_action)
+
+        # 可以从按钮布局中移除这些按钮，因为现在它们在菜单中
+        # 或者保留，根据你的偏好
 
     def _load_data(self):
         # 加载分类树
@@ -120,10 +150,10 @@ class MainWindow(QMainWindow):
         self.add_button.clicked.connect(self._on_add)
         self.edit_button.clicked.connect(self._on_edit)
         self.delete_button.clicked.connect(self._on_delete)
-        self.export_button.clicked.connect(self._on_export)
-        self.import_button.clicked.connect(self._on_import)
-        self.change_password_button.clicked.connect(self._on_change_password)
-        self.manage_categories_button.clicked.connect(self._on_manage_categories)
+        # self.export_button.clicked.connect(self._on_export)
+        # self.import_button.clicked.connect(self._on_import)
+        # self.change_password_button.clicked.connect(self._on_change_password)
+        # self.manage_categories_button.clicked.connect(self._on_manage_categories)
 
         # 分类树选择变化
         self.category_tree.selectionModel().selectionChanged.connect(self._on_category_selected)
@@ -277,3 +307,4 @@ class MainWindow(QMainWindow):
             self.category_tree.setModel(self.category_model)
             self.category_tree.expandAll()
             self.statusBar().showMessage("分类已更新", 3000)
+
