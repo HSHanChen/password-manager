@@ -1,0 +1,38 @@
+QMainWindow {
+    background-color: #f5f5f5;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+QMenuBar {
+    background-color: #e0e7ff;
+    padding: 5px;
+}
+
+QMenuBar::item {
+    padding: 5px 10px;
+    background: transparent;
+    border-radius: 4px;
+}
+
+QMenuBar::item:selected {
+    background: #c7d2fe;
+}
+
+QTableView {
+    background: white;
+    border: 1px solid #d1d5db;
+    gridline-color: #e5e7eb;
+}
+
+QHeaderView::section {
+    background-color: #4a6fa5;
+    color: white;
+    padding: 6px;
+    border: none;
+}
+
+QStatusBar {
+    background: #e0e7ff;
+    color: #374151;
+    padding: 3px;
+}

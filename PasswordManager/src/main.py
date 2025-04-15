@@ -5,33 +5,33 @@
 @Description: 
 """
 import sys
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from config import AppConfig
-from secure_storage import SecureStorage
-from styles import get_stylesheet
+
+from PyQt5.QtWidgets import QApplication
+
+from config.app_config import AppConfig
+from config.styles import load_stylesheet
+from core.secure_storage import SecureStorage
+from ui.dialogs.login import LoginDialog
 from ui.main_window import MainWindow
-from ui.login_dialog import LoginDialog
 
 
-class PasswordManagerApp:
+class PasswordManager:
     def __init__(self):
         self.config = AppConfig()
         self.storage = SecureStorage(self.config)
         self.app = QApplication(sys.argv)
-        self.app.setStyle('Fusion')
-        self.app.setStyleSheet(get_stylesheet())
+        self.app.setStyleSheet(load_stylesheet())
 
     def run(self):
         if self.is_first_run():
             self.setup_master_password()
         else:
             self.login()
-
         sys.exit(self.app.exec_())
 
     def is_first_run(self):
         data = self.storage.load_data()
-        return data["master_salt"] is None
+        return data.get("master_salt") is None
 
     def setup_master_password(self):
         dialog = LoginDialog(mode='setup', crypto=self.storage)
@@ -53,7 +53,6 @@ class PasswordManagerApp:
         window = MainWindow(self.storage, self.config)
         window.show()
 
-
 if __name__ == "__main__":
-    manager = PasswordManagerApp()
+    manager = PasswordManager()
     manager.run()

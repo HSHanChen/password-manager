@@ -3,13 +3,15 @@ from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
 
-a = Analysis(['main.py'],
+a = Analysis(['src/main.py'],
              pathex=[],
              binaries=[],
              datas=[
-                 ('icons/*', 'icons'),
-                 ('ui/*.py', 'ui'),
-                 ('styles.py', '.')
+                 ('resources/icons/*', 'resources/icons'),
+                 ('resources/qss/*', 'resources/qss'),
+                 ('src/config/*.py', 'config'),
+                 ('src/ui/*.py', 'ui'),
+                 ('src/core/*.py', 'core')
              ],
              hiddenimports=[],
              hookspath=[],
@@ -35,12 +37,4 @@ exe = EXE(pyz,
           upx=True,
           runtime_tmpdir=None,
           console=False,
-          icon='icons/app.ico')
-
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=False,
-               upx=True,
-               name='PasswordManager')
+          icon='resources/icons/app.ico')
