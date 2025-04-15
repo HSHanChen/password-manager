@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="/">
-    <file>resources/eye.svg</file>
-    <file>resources/eye_closed.svg</file>
-  </qresource>
-</RCC>
