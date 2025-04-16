@@ -27,7 +27,7 @@ class PasswordDialog(QDialog):
         self.setModal(True)
 
         # 设置背景颜色
-        self.setStyleSheet("background-color: #f5f5f5;")
+        # self.setStyleSheet("background-color: #f5f5f5;")
 
         layout = QVBoxLayout()
         form = QFormLayout()
@@ -57,7 +57,7 @@ class PasswordDialog(QDialog):
         # 密码
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password_input.setStyleSheet("background-color: white; padding-right: 30px;")  # 输入框背景色与间距
+        # self.password_input.setStyleSheet("background-color: white; padding-right: 30px;")  # 输入框背景色与间距
 
         # 眼睛图标按钮
         self.toggle_btn = QPushButton()

@@ -4,6 +4,7 @@
 @File: secure_storage.py
 @Description: 
 """
+
 import base64
 import hashlib
 import json
@@ -20,6 +21,21 @@ class SecureStorage:
         self.key = None
         self.backend = default_backend()
         self.iterations = 100_000
+
+    def is_master_password_set(self) -> bool:
+        """
+        判断是否已经设置了主密码（即 passwords.dat 文件是否存在且包含 salt 和 data 字段）
+        """
+        if not os.path.exists(self.config.data_path):
+            return False
+
+        try:
+            with open(self.config.data_path, "r", encoding="utf-8") as f:
+                obj = json.load(f)
+            return "salt" in obj and "data" in obj
+        except Exception as e:
+            print(f"[读取主密码失败] {e}")
+            return False
 
     def initialize_master_key(self, password, salt=None):
         if not password:

@@ -5,6 +5,7 @@
 @Description: 
 """
 
+
 import os
 import sys
 
@@ -19,12 +20,20 @@ from ui.main_window import MainWindow
 class PasswordManager:
     def __init__(self):
         self.config = AppConfig()
+        self.ensure_config_directory()
         self.storage = SecureStorage(self.config)
         self.app = QApplication(sys.argv)
         self.main_window = None
         self.initialized = False
 
+    def ensure_config_directory(self):
+        """确保配置目录和密码文件路径存在"""
+        os.makedirs(os.path.dirname(self.config.data_path), exist_ok=True)
+
     def run(self):
+        # 加载样式表
+        self.app.setStyleSheet(self.load_stylesheet())
+
         try:
             if not os.path.exists(self.config.data_path) or os.path.getsize(self.config.data_path) == 0:
                 print("首次运行，需要设置主密码")
@@ -102,7 +111,16 @@ class PasswordManager:
             print(f"主窗口创建失败: {str(e)}")
             QMessageBox.critical(None, "错误", f"无法启动主界面: {str(e)}")
 
+    def load_stylesheet(self):
+        try:
+            # 注意根据项目结构调整路径
+            with open("../resources/qss/main.qss", "r", encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError:
+            print("样式表未找到")
+            return ""
+
 
 if __name__ == "__main__":
-    app = PasswordManager()
-    app.run()
+    manager = PasswordManager()
+    manager.run()

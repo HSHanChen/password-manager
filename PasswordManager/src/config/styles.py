@@ -5,19 +5,11 @@
 @Description: 
 """
 
-from PyQt6.QtCore import QFile, QTextStream, QIODevice
 
-
+# 加载并应用样式表
 def load_stylesheet():
-    style_file = QFile(":/qss/main.qss")
-    if style_file.open(QIODevice.OpenModeFlag.ReadOnly | QIODevice.OpenModeFlag.Text):
-        stream = QTextStream(style_file)
-        return stream.readAll()
-    return """
-    QMainWindow {
-        background-color: #f5f5f5;
-    }
-    QStatusBar {
-        background: #e0e7ff;
-    }
-    """
+    try:
+        with open("../resources/qss/main.qss", "r", encoding="utf-8") as style_file:
+            return style_file.read()
+    except FileNotFoundError:
+        return ""  # 如果找不到样式表，返回空样式
