@@ -10,121 +10,83 @@ import hashlib
 import json
 import os
 
-from Crypto.Cipher import AES
-from Crypto.Protocol.KDF import PBKDF2
-from Crypto.Random import get_random_bytes
-from Crypto.Util.Padding import pad, unpad
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
 class SecureStorage:
     def __init__(self, config):
         self.config = config
-        self.salt = None
-        self.master_key = None
-        os.makedirs(self.config.data_path.parent, exist_ok=True)
-
-        # 初始化时尝试加载salt
-        if os.path.exists(self.config.data_path):
-            with open(self.config.data_path, 'r') as f:
-                content = f.read()
-                if content:
-                    data = base64.b64decode(content.encode())
-                    self.salt = data[:16]
+        self.key = None  # 派生出来的密钥（用于 Fernet）
+        self.backend = default_backend()
+        self.iterations = 100_000  # PBKDF2 迭代次数
 
     def initialize_master_key(self, password, salt=None):
-        """初始化主密钥"""
-        self.salt = salt if salt else get_random_bytes(16)
-        self.master_key = PBKDF2(
-            password.encode(),
-            self.salt,
-            dkLen=32,
-            count=100000
+        """
+        初始化主密钥。首次设置主密码时生成新的 salt；登录时使用已保存的 salt。
+        """
+        if salt is None:
+            salt = os.urandom(16)
+
+        kdf = PBKDF2HMAC(
+            algorithm=hashlib.sha256(),
+            length=32,
+            salt=salt,
+            iterations=self.iterations,
+            backend=self.backend
         )
-        return self.salt
-
-    def encrypt_data(self, data):
-        """加密数据"""
-        if not self.master_key:
-            raise ValueError("主密钥未初始化")
-
-        iv = get_random_bytes(16)
-        cipher = AES.new(self.master_key, AES.MODE_CBC, iv)
-        encrypted = cipher.encrypt(pad(json.dumps(data).encode(), AES.block_size))
-        return base64.b64encode(self.salt + iv + encrypted).decode()
-
-    def decrypt_data(self, encrypted_str):
-        """解密数据"""
-        if not self.master_key:
-            raise ValueError("主密钥未初始化")
-
-        data = base64.b64decode(encrypted_str.encode())
-        salt, iv, encrypted = data[:16], data[16:32], data[32:]
-
-        if salt != self.salt:
-            raise ValueError("Salt不匹配")
-
-        cipher = AES.new(self.master_key, AES.MODE_CBC, iv)
-        decrypted = unpad(cipher.decrypt(encrypted), AES.block_size)
-        return json.loads(decrypted.decode())
-
-    def save_data(self, data):
-        print("准备保存数据...")  # 调试
-        try:
-            if "master_salt" not in data:
-                data["master_salt"] = self.salt.hex()
-
-            encrypted = self.encrypt_data(data)
-            print(f"加密后的数据长度: {len(encrypted)}")  # 调试
-
-            with open(self.config.data_path, 'w') as f:
-                f.write(encrypted)
-            print("数据保存成功")  # 调试
-            return True
-        except Exception as e:
-            print(f"保存数据出错: {str(e)}")  # 调试
-            raise
-
-    def load_data(self):
-        """从文件加载数据"""
-        if not os.path.exists(self.config.data_path) or os.path.getsize(self.config.data_path) == 0:
-            return {"passwords": [], "categories": [], "master_salt": None}
-
-        with open(self.config.data_path, 'r') as f:
-            content = f.read()
-            if not content:
-                return {"passwords": [], "categories": [], "master_salt": None}
-            return self.decrypt_data(content)
+        self.key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+        return salt  # 返回 salt 以便保存
 
     def verify_password(self, password):
-        """修正后的密码验证方法"""
+        """
+        用当前 key 尝试解密测试数据验证密码是否正确。
+        """
         try:
-            data = self.load_data()
-            if not data or not data.get("master_salt"):
+            # 尝试读取数据文件
+            if not os.path.exists(self.config.data_path):
                 return False
 
-            # 从文件读取存储的salt(hex字符串)
-            file_salt_hex = data["master_salt"]
-            file_salt = bytes.fromhex(file_salt_hex)
+            with open(self.config.data_path, "r", encoding="utf-8") as f:
+                encrypted = json.load(f)
 
-            # 用文件salt生成密钥
-            file_key = PBKDF2(password.encode(), file_salt, dkLen=32, count=100000)
-            file_hash = hashlib.sha256(file_key).digest()
+            if "data" not in encrypted:
+                return False
 
-            # 用当前salt生成密钥
-            current_key = PBKDF2(password.encode(), self.salt, dkLen=32, count=100000)
-            current_hash = hashlib.sha256(current_key).digest()
+            fernet = Fernet(self.key)
+            decrypted_json = fernet.decrypt(encrypted["data"].encode())
+            json.loads(decrypted_json.decode("utf-8"))  # 尝试解析 JSON，验证成功
+            return True
 
-            # 双重验证
-            return file_hash == current_hash
         except Exception as e:
-            print(f"密码验证出错: {str(e)}")
+            print(f"[验证失败] {str(e)}")
             return False
 
-    def save_data(self, data):
-        """确保保存时包含完整的验证信息"""
-        if "master_salt" not in data:
-            data["master_salt"] = self.salt.hex()
+    def save_data(self, data: dict):
+        """
+        使用当前派生密钥加密并保存数据。
+        """
+        fernet = Fernet(self.key)
+        raw_json = json.dumps(data).encode()
+        encrypted = fernet.encrypt(raw_json).decode()
 
-        encrypted = self.encrypt_data(data)
-        with open(self.config.data_path, 'wb') as f:  # 使用二进制写入
-            f.write(encrypted.encode())
+        with open(self.config.data_path, "w", encoding="utf-8") as f:
+            json.dump({"data": encrypted}, f, ensure_ascii=False, indent=4)
+
+    def load_data(self) -> dict:
+        """
+        读取并解密数据文件（使用当前派生密钥）。
+        """
+        if not os.path.exists(self.config.data_path):
+            return {}
+
+        with open(self.config.data_path, "r", encoding="utf-8") as f:
+            encrypted = json.load(f)
+
+        if "data" not in encrypted:
+            return {}
+
+        fernet = Fernet(self.key)
+        decrypted = fernet.decrypt(encrypted["data"].encode())
+        return json.loads(decrypted.decode("utf-8"))
