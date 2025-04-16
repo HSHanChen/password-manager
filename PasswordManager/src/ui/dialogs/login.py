@@ -5,83 +5,158 @@
 @Description: 
 """
 
-from PyQt5.QtWidgets import (
-    QDialog,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QMessageBox,
-)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QGraphicsDropShadowEffect
 
 
 class LoginDialog(QDialog):
-    def __init__(self, mode="login", crypto=None, parent=None):
+    def __init__(self, mode, crypto, parent=None):
         super().__init__(parent)
-        self.mode = mode  # "login" or "setup"
-        self.crypto = crypto  # SecureStorage 实例
-        self.setWindowTitle("登录" if mode == "login" else "设置主密码")
-        self.setup_ui()
 
-    def setup_ui(self):
-        layout = QVBoxLayout()
+        self.setWindowTitle("设置主密码" if mode == 'setup' else "登录")
+        self.setWindowIcon(QIcon("icons/lock_icon.png"))  # 可自定义图标
 
-        self.password_label = QLabel("主密码:" if self.mode == "login" else "请输入主密码:")
-        self.password_input = QLineEdit()
-        self.password_input.setEchoMode(QLineEdit.Password)
+        self.crypto = crypto
+        self.mode = mode
 
-        layout.addWidget(self.password_label)
-        layout.addWidget(self.password_input)
+        self.password_input = QLineEdit(self)
+        self.password_input.setEchoMode(QLineEdit.Password)  # 默认密码框
+        self.password_input.setPlaceholderText("请输入密码")  # 提示文本
+        self.password_input.setStyleSheet("""
+            QLineEdit {
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 15px;
+                border: 1px solid #ccc;
+                background-color: #ffffff;
+            }
+        """)
 
-        if self.mode == "setup":
-            self.confirm_label = QLabel("请确认主密码:")
-            self.confirm_input = QLineEdit()
-            self.confirm_input.setEchoMode(QLineEdit.Password)
+        self.confirm_password_input = QLineEdit(self)
+        self.confirm_password_input.setEchoMode(QLineEdit.Password)  # 默认密码框
+        self.confirm_password_input.setPlaceholderText("请确认密码")  # 提示文本
+        self.confirm_password_input.setStyleSheet("""
+            QLineEdit {
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 15px;
+                border: 1px solid #ccc;
+                background-color: #ffffff;
+            }
+        """)
 
-            layout.addWidget(self.confirm_label)
-            layout.addWidget(self.confirm_input)
+        self.show_eye_button = QPushButton("👁️", self)
+        self.show_eye_button.setStyleSheet("background: transparent; border: none; font-size: 18px;")
+        self.show_eye_button.clicked.connect(self.toggle_password_visibility)
 
-        # 按钮区域
-        button_layout = QHBoxLayout()
-        self.confirm_button = QPushButton("确定")
-        self.cancel_button = QPushButton("取消")
-        button_layout.addWidget(self.confirm_button)
-        button_layout.addWidget(self.cancel_button)
+        self.confirm_button = QPushButton("确定", self)
+        self.confirm_button.setStyleSheet("""
+            QPushButton {
+                padding: 12px;
+                background-color: #4CAF50;
+                color: white;
+                border-radius: 10px;
+                font-size: 16px;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        self.confirm_button.clicked.connect(self.accept)
 
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-
-        # 绑定事件
-        self.confirm_button.clicked.connect(self.on_accept)
+        self.cancel_button = QPushButton("取消", self)
+        self.cancel_button.setStyleSheet("""
+            QPushButton {
+                padding: 12px;
+                background-color: #f44336;
+                color: white;
+                border-radius: 10px;
+                font-size: 16px;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #e53935;
+            }
+        """)
         self.cancel_button.clicked.connect(self.reject)
 
-    def on_accept(self):
-        password = self.password_input.text()
-        confirm = self.confirm_input.text() if self.mode == "setup" else None
+        self.layout = QVBoxLayout(self)
 
-        if not password:
-            QMessageBox.warning(self, "错误", "请输入密码")
+        # 创建顶部标题
+        self.title_label = QLabel(f"请输入{'设置' if mode == 'setup' else '登录'}密码", self)
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet("""
+            QLabel {
+                font-size: 18px;
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 10px;
+            }
+        """)
+
+        # 提示文字
+        self.tip_label = QLabel("由于您是首次登录，请设置主密码", self)
+        self.tip_label.setAlignment(Qt.AlignCenter)
+        self.tip_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 20px;
+            }
+        """)
+
+        # 密码行
+        self.password_layout = QVBoxLayout()
+        self.password_layout.addWidget(self.password_input)
+        self.password_layout.addWidget(self.confirm_password_input)
+
+        self.layout.addWidget(self.title_label)
+        self.layout.addWidget(self.tip_label)  # 添加提示文字
+        self.layout.addLayout(self.password_layout)
+
+        # 添加按钮
+        self.button_layout = QHBoxLayout()
+        self.button_layout.addWidget(self.cancel_button)
+        self.button_layout.addWidget(self.confirm_button)
+        self.layout.addLayout(self.button_layout)
+
+        self.layout.setContentsMargins(30, 30, 30, 30)
+        self.layout.setSpacing(15)
+
+        # 设置背景色
+        self.setStyleSheet("QDialog { background-color: #f4f4f4; }")
+
+        self.setFixedSize(400, 300)
+        self.setShadowEffect()
+
+    def toggle_password_visibility(self):
+        """
+        切换密码输入框的显示/隐藏状态
+        """
+        if self.password_input.echoMode() == QLineEdit.Password:
+            self.password_input.setEchoMode(QLineEdit.Normal)
+            self.confirm_password_input.setEchoMode(QLineEdit.Normal)  # 显示确认密码框的内容
+        else:
+            self.password_input.setEchoMode(QLineEdit.Password)
+            self.confirm_password_input.setEchoMode(QLineEdit.Password)  # 隐藏确认密码框的内容
+
+    def setShadowEffect(self):
+        """
+        设置对话框的阴影效果
+        """
+        shadow_effect = QGraphicsDropShadowEffect()
+        shadow_effect.setBlurRadius(10)
+        shadow_effect.setOffset(0, 0)
+        shadow_effect.setColor(Qt.black)
+        self.setGraphicsEffect(shadow_effect)
+
+    def accept(self):
+        """
+        确认按钮点击事件，进行密码一致性验证
+        """
+        if self.password_input.text() != self.confirm_password_input.text():
+            QMessageBox.warning(self, "错误", "两次输入的密码不一致，请重新输入。")
             return
-
-        if self.mode == "setup":
-            if not confirm:
-                QMessageBox.warning(self, "错误", "请确认密码")
-                return
-            if password != confirm:
-                QMessageBox.warning(self, "错误", "两次密码输入不一致")
-                return
-
-            # 验证通过，接受对话框
-            self.accept()
-
-        elif self.mode == "login":
-            if not self.crypto:
-                QMessageBox.critical(self, "错误", "未设置加密模块")
-                return
-            if not self.crypto.verify_password(password):
-                QMessageBox.warning(self, "错误", "密码错误")
-                return
-
-            # 验证通过
-            self.accept()
+        super().accept()
