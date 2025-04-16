@@ -65,8 +65,6 @@ class PasswordManager:
                     "categories": [{"id": 1, "name": "默认分类", "parent_id": None}],
                     "master_salt": salt.hex()
                 }
-
-                # 保存数据
                 self.storage.save_data(initial_data)
                 print("数据保存完成，准备显示主窗口...")
 
