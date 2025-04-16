@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("密码管理器")
         self.setGeometry(100, 100, 1000, 600)
         self.setMinimumSize(800, 500)
-        self.setAttribute(Qt.WA_DeleteOnClose, False)  # 防止窗口被自动销毁
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)  # 防止窗口被自动销毁
 
         # 初始化UI
         self._setup_ui()
@@ -190,7 +190,7 @@ class MainWindow(QMainWindow):
         """分类选择变化处理"""
         selected = self.category_tree.currentIndex()
         if selected.isValid():
-            self.current_category_id = selected.data(Qt.UserRole)
+            self.current_category_id = selected.data(Qt.ItemDataRole.UserRole)
             self._load_password_data()
             self.statusBar().showMessage(f"已选择分类: {selected.data()}", 3000)
 

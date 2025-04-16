@@ -60,7 +60,7 @@ class CategoryTreeModel(QStandardItemModel):
         items = {}
         for cat in self.categories:
             item = QStandardItem(cat['name'])
-            item.setData(cat['id'], Qt.UserRole)
+            item.setData(cat['id'], Qt.ItemDataRole.UserRole)
             items[cat['id']] = item
 
         # 构建树结构
