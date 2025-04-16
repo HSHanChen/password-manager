@@ -7,11 +7,11 @@
 
 import os
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QSplitter, QTreeView, QTableView, QHeaderView,
-                             QLineEdit, QPushButton, QAction,
-                             QMessageBox, QFileDialog)
+                             QLineEdit, QPushButton, QMessageBox, QFileDialog)
 
 from core.models import PasswordTableModel, CategoryTreeModel
 
@@ -207,7 +207,7 @@ class MainWindow(QMainWindow):
             categories=self.storage.load_data()["categories"]
         )
 
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             entry = dialog.get_entry_data()
 
             # 加密密码
@@ -268,7 +268,7 @@ class MainWindow(QMainWindow):
             }
         )
 
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             updated = dialog.get_entry_data()
 
             # 如果密码有变化，重新加密
@@ -361,7 +361,7 @@ class MainWindow(QMainWindow):
         """修改主密码"""
         from ui.dialogs.login import LoginDialog
         dialog = LoginDialog(mode='change', crypto=self.storage)
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             QMessageBox.information(self, "成功", "主密码已修改")
 
     def closeEvent(self, event):

@@ -5,9 +5,9 @@
 @Description: 
 """
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QGraphicsDropShadowEffect
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QGraphicsDropShadowEffect
 
 
 class LoginDialog(QDialog):
@@ -21,7 +21,7 @@ class LoginDialog(QDialog):
         self.mode = mode
 
         self.password_input = QLineEdit(self)
-        self.password_input.setEchoMode(QLineEdit.Password)  # 默认密码框
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)  # 默认密码框
         self.password_input.setPlaceholderText("请输入密码")  # 提示文本
         self.password_input.setStyleSheet("""
             QLineEdit {
@@ -34,7 +34,7 @@ class LoginDialog(QDialog):
         """)
 
         self.confirm_password_input = QLineEdit(self)
-        self.confirm_password_input.setEchoMode(QLineEdit.Password)  # 默认密码框
+        self.confirm_password_input.setEchoMode(QLineEdit.EchoMode.Password)  # 默认密码框
         self.confirm_password_input.setPlaceholderText("请确认密码")  # 提示文本
         self.confirm_password_input.setStyleSheet("""
             QLineEdit {
@@ -86,7 +86,7 @@ class LoginDialog(QDialog):
 
         # 创建顶部标题
         self.title_label = QLabel(f"请输入{'设置' if mode == 'setup' else '登录'}密码", self)
-        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("""
             QLabel {
                 font-size: 18px;
@@ -98,7 +98,7 @@ class LoginDialog(QDialog):
 
         # 提示文字
         self.tip_label = QLabel("由于您是首次登录，请设置主密码", self)
-        self.tip_label.setAlignment(Qt.AlignCenter)
+        self.tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.tip_label.setStyleSheet("""
             QLabel {
                 font-size: 14px;
@@ -135,12 +135,12 @@ class LoginDialog(QDialog):
         """
         切换密码输入框的显示/隐藏状态
         """
-        if self.password_input.echoMode() == QLineEdit.Password:
+        if self.password_input.echoMode() == QLineEdit.EchoMode.Password:
             self.password_input.setEchoMode(QLineEdit.Normal)
             self.confirm_password_input.setEchoMode(QLineEdit.Normal)  # 显示确认密码框的内容
         else:
-            self.password_input.setEchoMode(QLineEdit.Password)
-            self.confirm_password_input.setEchoMode(QLineEdit.Password)  # 隐藏确认密码框的内容
+            self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+            self.confirm_password_input.setEchoMode(QLineEdit.EchoMode.Password)  # 隐藏确认密码框的内容
 
     def setShadowEffect(self):
         """
@@ -149,7 +149,7 @@ class LoginDialog(QDialog):
         shadow_effect = QGraphicsDropShadowEffect()
         shadow_effect.setBlurRadius(10)
         shadow_effect.setOffset(0, 0)
-        shadow_effect.setColor(Qt.black)
+        shadow_effect.setColor(Qt.GlobalColor.black)
         self.setGraphicsEffect(shadow_effect)
 
     def accept(self):

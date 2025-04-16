@@ -4,8 +4,9 @@
 @File: models.py
 @Description: 
 """
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+
+from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
 
 
 class PasswordTableModel(QAbstractTableModel):
@@ -21,7 +22,7 @@ class PasswordTableModel(QAbstractTableModel):
     def columnCount(self, parent=QModelIndex()):
         return len(self.headers)
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if not index.isValid():
             return None
 
@@ -29,7 +30,7 @@ class PasswordTableModel(QAbstractTableModel):
         col = index.column()
         item = self.passwords[row]
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return {
                 0: item.get('name', ''),
                 1: self.categories.get(item.get('category_id'), '无分类'),
@@ -39,8 +40,8 @@ class PasswordTableModel(QAbstractTableModel):
             }.get(col, '')
         return None
 
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.ItemDataRole.Horizontal:
             return self.headers[section]
         return None
 

@@ -5,7 +5,7 @@
 @Description: 
 """
 
-from PyQt5.QtCore import QFile, QTextStream
+from PyQt6.QtCore import QFile, QTextStream
 
 
 def load_stylesheet():

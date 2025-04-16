@@ -4,8 +4,8 @@
 @File: password.py
 @Description: 
 """
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
                              QLineEdit, QComboBox, QPushButton)
 
 
@@ -45,7 +45,7 @@ class PasswordDialog(QDialog):
 
         # 密码
         self.password_input = QLineEdit()
-        self.password_input.setEchoMode(QLineEdit.Password)
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.toggle_btn = QPushButton()
         self.toggle_btn.setIcon(QIcon(":/icons/eye.svg"))
         self.toggle_btn.setCheckable(True)
@@ -96,7 +96,7 @@ class PasswordDialog(QDialog):
             self.password_input.setEchoMode(QLineEdit.Normal)
             self.toggle_btn.setIcon(QIcon(":/icons/eye_closed.svg"))
         else:
-            self.password_input.setEchoMode(QLineEdit.Password)
+            self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
             self.toggle_btn.setIcon(QIcon(":/icons/eye.svg"))
 
     def get_entry_data(self):

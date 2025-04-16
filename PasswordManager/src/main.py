@@ -8,7 +8,7 @@
 import os
 import sys
 
-from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog
+from PyQt6.QtWidgets import QApplication, QMessageBox, QDialog
 
 from config.app_config import AppConfig
 from core.secure_storage import SecureStorage
@@ -35,7 +35,7 @@ class PasswordManager:
                 self.login()
 
             if self.initialized and self.main_window:
-                sys.exit(self.app.exec_())
+                sys.exit(self.app.exec())
             else:
                 sys.exit(1)
 
@@ -46,11 +46,11 @@ class PasswordManager:
 
     def setup_master_password(self):
         dialog = LoginDialog(mode='setup', crypto=self.storage)
-        result = dialog.exec_()  # 获取对话框结果
+        result = dialog.exec()  # 获取对话框结果
 
         print(f"对话框返回结果: {result}")  # 调试输出
 
-        if result == QDialog.Accepted:
+        if result == QDialog.DialogCode.Accepted:
             print("对话框已接受，开始处理密码...")
             password = dialog.password_input.text()
 
@@ -81,7 +81,7 @@ class PasswordManager:
     def login(self):
         """修正后的登录流程"""
         dialog = LoginDialog(mode='login', crypto=self.storage)
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             password = dialog.password_input.text()
 
             # 先加载数据获取存储的salt
