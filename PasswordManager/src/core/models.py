@@ -41,7 +41,7 @@ class PasswordTableModel(QAbstractTableModel):
         return None
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
-        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.ItemDataRole.Horizontal:
+        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return self.headers[section]
         return None
 
@@ -49,23 +49,22 @@ class PasswordTableModel(QAbstractTableModel):
 class CategoryTreeModel(QStandardItemModel):
     def __init__(self, categories):
         super().__init__()
+        self.categories = categories or []
         self.setHorizontalHeaderLabels(["分类"])
-        self.categories = categories
         self._setup_model()
 
     def _setup_model(self):
         self.clear()
+        self.setHorizontalHeaderLabels(["分类"])  # 再次设置标题
 
-        # 创建所有分类项
         items = {}
         for cat in self.categories:
             item = QStandardItem(cat['name'])
             item.setData(cat['id'], Qt.ItemDataRole.UserRole)
             items[cat['id']] = item
 
-        # 构建树结构
         for cat in self.categories:
-            parent_id = cat['parent_id']
+            parent_id = cat.get('parent_id')
             item = items[cat['id']]
 
             if parent_id is None:

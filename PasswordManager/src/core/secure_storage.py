@@ -4,7 +4,6 @@
 @File: secure_storage.py
 @Description: 
 """
-
 import base64
 import hashlib
 import json
@@ -23,6 +22,9 @@ class SecureStorage:
         self.iterations = 100_000
 
     def initialize_master_key(self, password, salt=None):
+        if not password:
+            raise ValueError("密码不能为空")
+
         if salt is None:
             salt = os.urandom(16)
 
@@ -60,12 +62,14 @@ class SecureStorage:
             return False
 
     def save_data(self, data: dict):
+        if not self.key:
+            raise ValueError("未初始化密钥，不能保存数据")
+
         fernet = Fernet(self.key)
-        raw_json = json.dumps(data).encode()
-        encrypted = fernet.encrypt(raw_json).decode()
+        encrypted = fernet.encrypt(json.dumps(data).encode()).decode()
 
         obj = {
-            "salt": data.get("master_salt"),  # 这个必须是 hex 字符串
+            "salt": data.get("master_salt"),
             "data": encrypted
         }
 
@@ -79,8 +83,11 @@ class SecureStorage:
         with open(self.config.data_path, "r", encoding="utf-8") as f:
             obj = json.load(f)
 
-        if "salt" not in obj or "data" not in obj:
+        if "data" not in obj:
             return {}
+
+        if not self.key:
+            raise ValueError("密钥未初始化，无法解密")
 
         fernet = Fernet(self.key)
         decrypted = fernet.decrypt(obj["data"].encode())

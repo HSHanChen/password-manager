@@ -5,12 +5,12 @@
 @Description: 
 """
 
-from PyQt6.QtCore import QFile, QTextStream
+from PyQt6.QtCore import QFile, QTextStream, QIODevice
 
 
 def load_stylesheet():
     style_file = QFile(":/qss/main.qss")
-    if style_file.open(QFile.ReadOnly | QFile.Text):
+    if style_file.open(QIODevice.OpenModeFlag.ReadOnly | QIODevice.OpenModeFlag.Text):
         stream = QTextStream(style_file)
         return stream.readAll()
     return """
@@ -20,5 +20,4 @@ def load_stylesheet():
     QStatusBar {
         background: #e0e7ff;
     }
-    /* 其他默认样式 */
     """
