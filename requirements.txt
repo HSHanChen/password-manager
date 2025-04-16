@@ -1,3 +1,3 @@
 PyQt5==5.15.9
-pycryptodome==3.19.0
-pyinstaller==5.13.0
+pycryptodome
+pyinstaller

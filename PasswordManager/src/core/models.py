@@ -4,7 +4,8 @@
 @File: models.py
 @Description: 
 """
-from PyQt5.QtCore import Qt, QAbstractTableModel
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 
 class PasswordTableModel(QAbstractTableModel):
@@ -14,17 +15,18 @@ class PasswordTableModel(QAbstractTableModel):
         self.categories = {c['id']: c['name'] for c in categories}
         self.headers = ["名称", "分类", "账号", "网址", "备注"]
 
-    def rowCount(self, parent=None):
+    def rowCount(self, parent=QModelIndex()):
         return len(self.passwords)
 
-    def columnCount(self, parent=None):
+    def columnCount(self, parent=QModelIndex()):
         return len(self.headers)
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return None
 
-        row, col = index.row(), index.column()
+        row = index.row()
+        col = index.column()
         item = self.passwords[row]
 
         if role == Qt.DisplayRole:
@@ -41,3 +43,33 @@ class PasswordTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self.headers[section]
         return None
+
+
+class CategoryTreeModel(QStandardItemModel):
+    def __init__(self, categories):
+        super().__init__()
+        self.setHorizontalHeaderLabels(["分类"])
+        self.categories = categories
+        self._setup_model()
+
+    def _setup_model(self):
+        self.clear()
+
+        # 创建所有分类项
+        items = {}
+        for cat in self.categories:
+            item = QStandardItem(cat['name'])
+            item.setData(cat['id'], Qt.UserRole)
+            items[cat['id']] = item
+
+        # 构建树结构
+        for cat in self.categories:
+            parent_id = cat['parent_id']
+            item = items[cat['id']]
+
+            if parent_id is None:
+                self.appendRow(item)
+            elif parent_id in items:
+                items[parent_id].appendRow(item)
+            else:
+                self.appendRow(item)
